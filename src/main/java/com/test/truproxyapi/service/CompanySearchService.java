@@ -1,5 +1,7 @@
 package com.test.truproxyapi.service;
 
+import com.test.truproxyapi.dto.CompanyResponse;
+import com.test.truproxyapi.dto.OfficerResponse;
 import com.test.truproxyapi.model.*;
 import com.test.truproxyapi.repository.AddressRepository;
 import com.test.truproxyapi.repository.CompanyRepository;
@@ -15,16 +17,17 @@ import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.test.truproxyapi.util.RequestUtil.appendUriQueryParam;
 import static com.test.truproxyapi.util.RequestUtil.httpEntity;
 
 @Service
 public class CompanySearchService {
-    private RestTemplate resetTemplate;
-    private OfficeSearchService officeSearchService;
+    private final RestTemplate resetTemplate;
+    private final OfficeSearchService officeSearchService;
 
-    private CompanyRepository companyRepository;
+    private final CompanyRepository companyRepository;
 
     @Autowired
     private OfficerRepository officerRepository;
@@ -34,6 +37,12 @@ public class CompanySearchService {
 
     @Value("${companies.search.url}")
     public String companiesSearchUrl;
+
+    @Value("${truproxy.api.url}")
+    private String truProxyApiUrl;
+
+    @Value("${truproxy.api.key}")
+    private String apiKey;
 
     @Autowired
     public CompanySearchService(RestTemplate resetTemplate, OfficeSearchService officeSearchService, CompanyRepository companyRepository) {
@@ -75,5 +84,29 @@ public class CompanySearchService {
 
         List<Company> company1 = List.of(company);
         return Companies.builder().items(company1).total_results(company1.size()).build();
+    }
+
+    public Company getCompanyByNumber(String companyNumber, boolean onlyActive) {
+        String url = String.format("%s/Companies/v1/Search?Query=%s", truProxyApiUrl, companyNumber);
+        CompanyResponse response = resetTemplate.getForObject(url, CompanyResponse.class);
+
+        if (response != null && response.getTotalResults() > 0) {
+            Company company = response.getItems().get(0);
+
+            // Add officer details
+            String officersUrl = String.format("%s/Companies/v1/Officers?CompanyNumber=%s", truProxyApiUrl, companyNumber);
+            OfficerResponse officerResponse = resetTemplate.getForObject(officersUrl, OfficerResponse.class);
+
+            if (officerResponse != null) {
+                List<Officer> officers = officerResponse.getOfficers().stream()
+                        .filter(officer -> officer.getAppointed_on() == null)  // filter out resigned officers
+                        .collect(Collectors.toList());
+                company.setOfficers(officers);
+            }
+
+            return company;
+        }
+
+        return null;
     }
 }

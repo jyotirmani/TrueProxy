@@ -7,6 +7,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,8 +20,6 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -36,6 +35,35 @@ public class CompanySearchServiceTest {
     @Mock
     private CompanyRepository companyRepository;
 
+    @Autowired
+    private CompanySearchService companyService;
+
+/*    @Test
+    public void testGetCompanyByNumber() {
+        // WireMock setup to mock TruProxy API responses
+        WireMockServer wireMockServer = new WireMockServer();
+        wireMockServer.start();
+
+        // Mock the response for company search
+        wireMockServer.stubFor(get(urlEqualTo("/Companies/v1/Search?Query=06500244"))
+                .willReturn(aResponse().withStatus(200).withBody("{...}")));  // Mocked response here
+
+        // Mock officer response
+        wireMockServer.stubFor(get(urlEqualTo("/Companies/v1/Officers?CompanyNumber=06500244"))
+                .willReturn(aResponse().withStatus(200).withBody("{...}")));
+
+        // Call the service method
+        Company company = companyService.getCompanyByNumber("06500244", true);
+
+        // Assert that the company and officers data is populated correctly
+        assertNotNull(company);
+        assertNotNull(company.getOfficers());
+        wireMockServer.stop();
+    }
+
+    private MappingBuilder get(UrlPattern urlPattern) {
+        return null;
+    }*/
 
     @Test
     public void searchCompanies() {
